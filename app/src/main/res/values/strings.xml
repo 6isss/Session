@@ -249,6 +249,14 @@
 
     <!-- Listening statistics -->
     <string name="page_stats_title">Stats</string>
+    <string name="page_media_title">Media</string>
+    <string name="page_media_audiobooks">Audiobooks</string>
+    <string name="page_media_podcasts">Podcasts</string>
+    <string name="page_media_add_folder">Add folder</string>
+    <string name="page_media_empty">Choose a local folder to see its audio here.</string>
+    <string name="home_favorites">Favorites</string>
+    <string name="home_shuffle">Shuffle</string>
+    <string name="home_suggestions">Suggestions</string>
     <string name="stats_period_today">Today</string>
     <string name="stats_period_this_week">This Week</string>
     <string name="stats_period_this_month">This Month</string>

@@ -629,15 +629,15 @@ class MainActivity : BaseActivity() {
                                                     context.getString(R.string.page_home_title)
                                                 val library =
                                                     context.getString(R.string.page_library_title)
-                                                val stats =
-                                                    context.getString(R.string.page_stats_title)
+                                                val media =
+                                                    context.getString(R.string.page_media_title)
                                                 if (route.value == UI.HomePage) {
                                                     scope.launch {
                                                         pagerState.animateScrollToPage(
                                                             when (it) {
                                                                 home -> 0
                                                                 library -> 1
-                                                                stats -> 2
+                                                                media -> 2
                                                                 else -> 0
                                                             }
                                                         )
@@ -648,7 +648,7 @@ class MainActivity : BaseActivity() {
                                                             when (it) {
                                                                 home -> 0
                                                                 library -> 1
-                                                                stats -> 2
+                                                                media -> 2
                                                                 else -> 0
                                                             }
                                                         )
@@ -662,15 +662,15 @@ class MainActivity : BaseActivity() {
                                             items = listOf(
                                                 NavItem(
                                                     stringResource(id = R.string.page_home_title),
-                                                    R.drawable.flamingo_icon
+                                                    R.drawable.ic_uitabbar_home
                                                 ),
                                                 NavItem(
                                                     stringResource(id = R.string.page_library_title),
                                                     R.drawable.ic_uitabbar_library
                                                 ),
                                                 NavItem(
-                                                    stringResource(id = R.string.page_stats_title),
-                                                    R.drawable.ic_uitabbar_stats
+                                                    stringResource(id = R.string.page_media_title),
+                                                    R.drawable.ic_uitabbar_media
                                                 )
                                             ),
                                             modifier = Modifier
@@ -940,7 +940,12 @@ class MainActivity : BaseActivity() {
                                                         Box(
                                                             modifier = Modifier
                                                                 .fillMaxWidth()
+                                                                .padding(horizontal = 12.dp, vertical = 4.dp)
                                                                 .height(miniPlayerHeight)
+                                                                .background(
+                                                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                                                    androidx.compose.foundation.shape.RoundedCornerShape(28.dp)
+                                                                )
                                                                 .clickable(
                                                                     interactionSource = remember { MutableInteractionSource() },
                                                                     indication = null,
@@ -1144,18 +1149,18 @@ class MainActivity : BaseActivity() {
                                                                                     overflow = TextOverflow.Ellipsis,
                                                                                     color = Color.Black withNight Color.White
                                                                                 )
-                                                                                /*Text(
-                                                                     text = musicPlaying.value?.Artist
-                                                                         ?: "未知艺术家",
-                                                                     fontSize = 13.5.sp,
-                                                                     lineHeight = 13.5.sp,
+                                                                                Text(
+                                                                     text = miniPlayerTrack?.artistsName
+                                                                         ?: defaultArtistsName,
+                                                                     fontSize = 13.sp,
+                                                                     lineHeight = 14.sp,
                                                                      modifier = Modifier.alpha(
-                                                                         0.6f
+                                                                         0.58f
                                                                      ),
                                                                      maxLines = 1,
                                                                      overflow = TextOverflow.Ellipsis,
                                                                      color = Color.Black withNight Color.White
-                                                                 )*/
+                                                                 )
                                                                             }
                                                                         }
                                                                     }
@@ -1238,30 +1243,23 @@ class MainActivity : BaseActivity() {
                                                                                         Vibrator.click(
                                                                                             context
                                                                                         )
-                                                                                        systemMediaControlResolver.intentSystemMediaDialog()
+                                                                                        MediaController.mediaControl?.seekToNextMediaItem()
                                                                                     }),
                                                                             contentAlignment = Alignment.Center
                                                                         ) {
-                                                                            val bluetoothAudioConnected = rememberBluetoothAudioConnected()
                                                                             AnimatedContent(
-                                                                                targetState = bluetoothAudioConnected,
+                                                                                targetState = true,
                                                                                 transitionSpec = {
                                                                                     (scaleIn(initialScale = 0.3f) + fadeIn()).togetherWith(
                                                                                         scaleOut(targetScale = 0.3f) + fadeOut()
                                                                                     )
                                                                                 }
-                                                                            ) { connected ->
+                                                                            ) {
                                                                                 Icon(
-                                                                                    painterResource(
-                                                                                        id = if (connected) {
-                                                                                            R.drawable.ic_earphone
-                                                                                        } else {
-                                                                                            R.drawable.ic_nowplaying_airplay
-                                                                                        }
-                                                                                    ),
-                                                                                    contentDescription = "AirPlay",
+                                                                                    painterResource(id = R.drawable.ic_nowplaying_mp_fforward),
+                                                                                    contentDescription = "Next",
                                                                                     modifier = Modifier
-                                                                                        .size(if (connected) 27.dp else 21.5.dp),
+                                                                                        .size(24.dp),
                                                                                     tint = Color.Black withNight Color.White
                                                                                 )
                                                                             }

@@ -1265,6 +1265,16 @@ class YosPlaybackService : MediaSessionService() {
             .build()
 
         val forwardingPlayer = object : ForwardingPlayer(player) {
+            override fun seekToPreviousMediaItem() {
+                if (player.isCurrentMediaItemSeekable && player.currentPosition > 7_000L) {
+                    player.seekTo(0L)
+                } else {
+                    super.seekToPreviousMediaItem()
+                }
+            }
+
+            override fun seekToPrevious() = seekToPreviousMediaItem()
+
             override fun play() {
                 player.fadePlay()
             }

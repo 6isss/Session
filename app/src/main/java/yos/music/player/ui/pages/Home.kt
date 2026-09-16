@@ -3,17 +3,21 @@ package yos.music.player.ui.pages
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,8 +58,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import yos.music.player.R
 import yos.music.player.code.MediaController
+import yos.music.player.code.ListenStatsManager
 import yos.music.player.code.utils.others.BitmapResolver
 import yos.music.player.data.libraries.MusicLibrary
+import yos.music.player.data.libraries.FavPlayListLibrary
+import yos.music.player.data.libraries.StatsPeriod
 import yos.music.player.data.libraries.SettingsLibrary
 import yos.music.player.data.libraries.YosMediaItem
 import yos.music.player.data.libraries.artistsName
@@ -81,13 +88,145 @@ fun Home(
             ProfileButton { navController.toUI(UI.Settings.Main) }
         },
         content = {
-            item("RecommendCard") {
-                RecommendCard(imageViewModel)
+            item("HomeQuickActions") {
+                HomeQuickActions()
+            }
+            item("HomeSuggestions") {
+                HomeSuggestions()
+            }
+            item("HomeMostPlayed") {
+                MostPlayedCard()
             }
             item("RecentlyPlayedCard") {
                 RecentlyPlayedCard()
             }
         })
+
+@Composable
+private fun HomeQuickActions() {
+    val scope = rememberCoroutineScope()
+    val songs = runCatching { MusicLibrary.songs }.getOrDefault(emptyList())
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        HomeActionTile(
+            title = stringResource(R.string.home_favorites),
+            symbol = "★",
+            modifier = Modifier.weight(1f),
+            onClick = {
+                val favorites = FavPlayListLibrary.favPlayList
+                if (favorites.isNotEmpty()) scope.launch(Dispatchers.IO) {
+                    MediaController.prepare(favorites.first(), favorites)
+                }
+            }
+        )
+        HomeActionTile(
+            title = stringResource(R.string.home_shuffle),
+            symbol = "↝",
+            modifier = Modifier.weight(1f),
+            onClick = {
+                if (songs.isNotEmpty()) scope.launch(Dispatchers.IO) {
+                    MediaController.prepare(songs.random(), songs, shuffleModeEnabled = true)
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun HomeActionTile(title: String, symbol: String, modifier: Modifier, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(112.dp),
+        shape = YosRoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+    ) {
+        Column(
+            Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(symbol, color = MaterialTheme.colorScheme.primary, fontSize = 28.sp)
+            Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+        }
+    }
+}
+
+@Composable
+private fun HomeSuggestions() {
+    val songs = runCatching { MusicLibrary.songs }.getOrDefault(emptyList())
+    val suggestions = remember { songs.pickRandomSongs(4) }
+    val scope = rememberCoroutineScope()
+    if (suggestions.isEmpty()) return
+    Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+        Text(
+            stringResource(R.string.home_suggestions),
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+        )
+        suggestions.chunked(2).forEach { rowSongs ->
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                rowSongs.forEach { song ->
+                    Column(
+                        Modifier.weight(1f).clickable {
+                            scope.launch(Dispatchers.IO) { MediaController.prepare(song, suggestions) }
+                        }
+                    ) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current).data(song.thumb).crossfade(true)
+                                .fallback(R.drawable.placeholder_music_default_artwork)
+                                .error(R.drawable.placeholder_music_default_artwork).build(),
+                            contentDescription = song.title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxWidth().height(150.dp)
+                                .graphicsLayer { clip = true; shape = YosRoundedCornerShape(18.dp) }
+                        )
+                        Text(song.title ?: defaultTitle, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
+                        Text(song.artistsName ?: defaultArtistsName, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.alpha(0.6f), fontSize = 13.sp)
+                    }
+                }
+                if (rowSongs.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun MostPlayedCard() {
+    val tracks = ListenStatsManager.snapshotForPeriod(
+        StatsPeriod.AllTime,
+        ListenStatsManager.liveSessionEvents.value
+    ).trackEntries.mapNotNull { it.libraryItem }.take(10)
+    if (tracks.isEmpty()) return
+    val scope = rememberCoroutineScope()
+    Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+        Text("Most Played", fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.padding(horizontal = 20.dp))
+        androidx.compose.foundation.lazy.LazyRow(
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(tracks.size) { index ->
+                val song = tracks[index]
+                Column(Modifier.width(156.dp).clickable {
+                    scope.launch(Dispatchers.IO) { MediaController.prepare(song, tracks) }
+                }) {
+                    AsyncImage(
+                        model = song.thumb,
+                        contentDescription = song.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(156.dp).graphicsLayer { clip = true; shape = YosRoundedCornerShape(18.dp) }
+                    )
+                    Text(song.title ?: defaultTitle, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
+                    Text(song.artistsName ?: defaultArtistsName, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.alpha(0.6f), fontSize = 13.sp)
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun RecommendCard(imageViewModel: ImageViewModel) {

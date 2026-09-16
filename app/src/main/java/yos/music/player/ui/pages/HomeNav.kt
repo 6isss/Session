@@ -30,7 +30,7 @@ fun HomeNav(
         val context = LocalContext.current
         val home = context.getString(R.string.page_home_title)
         val library = context.getString(R.string.page_library_title)
-        val stats = context.getString(R.string.page_stats_title)
+        val media = context.getString(R.string.page_media_title)
 
         //val pagerState = rememberPagerState(pageCount = { 2 })
         /*val nowPageIndex = when (nowPage.value) {
@@ -51,7 +51,7 @@ fun HomeNav(
                     when (pagerState.currentPage) {
                     0 -> home
                     1 -> library
-                    2 -> stats
+                    2 -> media
                     else -> home
                     }
                 )
@@ -68,7 +68,7 @@ fun HomeNav(
             when (page) {
                 0 -> Home(navController, imageViewModel)
                 1 -> Library(navController)
-                2 -> Stats(navController)
+                2 -> Media()
             }
         }
     }

@@ -1805,7 +1805,7 @@ private fun ActionButtonsRow(
                 targetState = musicPlayingLambda()?.let { FavPlayListLibrary.isFavorite(it) }
                     ?: false,
                 transitionSpec = {
-                    fadeIn() togetherWith fadeOut()
+                    fadeIn(tween(400)) togetherWith fadeOut(tween(400))
                 }) {
                 if (it) {
                     Icon(

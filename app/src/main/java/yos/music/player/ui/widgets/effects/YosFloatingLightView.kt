@@ -11,6 +11,10 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -102,55 +106,14 @@ fun YosFloatingLight(
             }
         }
 
-        if (NowplayingBackgroundEffect) {
-            val lastOption = remember("YosFloatingLight_lastOption") {
-                mutableStateOf(Option.Init.name)
-            }
-            YosWrapper {
-                val lifecycleState =
-                    LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
-                val active = lifecycleState.value.isAtLeast(Lifecycle.State.RESUMED)&&!showMiniPlayer()
-                AndroidView(factory = {
-                    KenBurnsView(it).apply {
-                        setTransitionGenerator(
-                            RandomTransitionGenerator(
-                                12000,
-                                AccelerateDecelerateInterpolator()
-                            )
-                        )
-                    }
-                }, modifier = modifier.drawWithCache {
-                    onDrawBehind {
-                        if (useBackground.value) {
-                        drawRect(Color.Black)
-                            }
-                    }
-                }) {
-                    if (drawable.value != null) {
-                        if (it.drawable != drawable.value) {
-                            val thisOptionType = Option.Set.name
-                            if (lastOption.value == thisOptionType) return@AndroidView
-                            it.setImageDrawable(drawable.value!!)
-                            lastOption.value = thisOptionType
-                        } else if (!isPlaying() || !active) {
-                            val thisOptionType = Option.Pause.name
-                            if (lastOption.value == thisOptionType) return@AndroidView
-                            it.pause()
-                            lastOption.value = thisOptionType
-                        } else {
-                            val thisOptionType = Option.Resume.name
-                            if (lastOption.value == thisOptionType) return@AndroidView
-                            it.resume()
-                            lastOption.value = thisOptionType
-                        }
-                    }
-                }
-            }
-        } else {
+        AnimatedContent(
+            targetState = drawable.value,
+            transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(400)) },
+            label = "now-playing-background"
+        ) { backgroundDrawable ->
             YosWrapper {
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current).data(data = drawable.value)
-                        .crossfade(true).build(),
+                    model = backgroundDrawable,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = modifier

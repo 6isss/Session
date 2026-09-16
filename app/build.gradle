@@ -156,6 +156,7 @@ dependencies {
     implementation "com.google.accompanist:accompanist-pager:0.20.2"
 
     implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.documentfile:documentfile:1.0.1'
 
     implementation('io.github.alexzhirkevich:cupertino:0.1.0-alpha04')
     implementation('io.github.alexzhirkevich:cupertino-icons-extended:0.1.0-alpha04')
