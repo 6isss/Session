@@ -36,6 +36,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.insets.navigationBarsHeight
+import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import yos.music.player.R
@@ -52,6 +54,7 @@ import yos.music.player.data.libraries.MusicLibrary
 import yos.music.player.data.libraries.artistsName
 import yos.music.player.data.libraries.defaultArtistsName
 import yos.music.player.data.libraries.defaultTitle
+import yos.music.player.ui.widgets.effects.LiquidGlassSurface
 
 @Stable
 data class NavItem(val label: String, val iconResId: Int)
@@ -61,6 +64,8 @@ fun BottomNavigator(
     nowLabel: () -> String,
     onLabelChange: (String) -> Unit,
     items: List<NavItem>,
+    hazeState: HazeState,
+    glassTint: Color,
     modifier: Modifier
 ) {
     val context = LocalContext.current
@@ -75,32 +80,36 @@ fun BottomNavigator(
 
     Box(modifier.fillMaxWidth().navigationBarsHeight(72.dp)) {
         if (searchExpanded && results.isNotEmpty()) {
-            Column(
-                Modifier
+            LiquidGlassSurface(
+                hazeState = hazeState,
+                tint = glassTint,
+                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
                     .padding(horizontal = 12.dp)
-                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
                     .padding(bottom = 64.dp, top = 8.dp)
             ) {
-                results.forEach { song ->
-                    Column(
-                        Modifier.fillMaxWidth().clickable {
-                            Vibrator.click(context)
-                            scope.launch(Dispatchers.IO) {
-                                MediaController.prepare(song, MusicLibrary.songs)
-                            }
-                            query = ""
-                            searchExpanded = false
-                        }.padding(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Text(song.title ?: defaultTitle, maxLines = 1, fontWeight = FontWeight.Medium)
-                        Text(
-                            song.artistsName ?: defaultArtistsName,
-                            maxLines = 1,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 12.sp
-                        )
+                Column {
+                    results.forEach { song ->
+                        Column(
+                            Modifier.fillMaxWidth().clickable {
+                                Vibrator.click(context)
+                                scope.launch(Dispatchers.IO) {
+                                    MediaController.prepare(song, MusicLibrary.songs)
+                                }
+                                query = ""
+                                searchExpanded = false
+                            }.padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text(song.title ?: defaultTitle, maxLines = 1, fontWeight = FontWeight.Medium)
+                            Text(
+                                song.artistsName ?: defaultArtistsName,
+                                maxLines = 1,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 12.sp
+                            )
+                        }
                     }
                 }
             }
@@ -120,32 +129,43 @@ fun BottomNavigator(
                 label = "bottom-search"
             ) { expanded ->
                 if (expanded) {
-                    BasicTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+                    LiquidGlassSurface(
+                        hazeState = hazeState,
+                        tint = glassTint,
                         modifier = Modifier.fillMaxWidth().height(52.dp)
-                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), RoundedCornerShape(26.dp))
-                            .padding(horizontal = 18.dp, vertical = 15.dp),
-                        decorationBox = { inner ->
-                            if (query.isEmpty()) Text("Search music", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            inner()
-                        }
-                    )
-                } else {
-                    Row(
-                        Modifier.fillMaxWidth().height(52.dp)
-                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.78f), RoundedCornerShape(26.dp)),
-                        horizontalArrangement = Arrangement.SpaceAround
                     ) {
-                        items.forEach { item -> NavigatorItem(item, nowLabel, onLabelChange) }
+                        BasicTextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 15.dp),
+                            decorationBox = { inner ->
+                                if (query.isEmpty()) Text("Search music", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                inner()
+                            }
+                        )
+                    }
+                } else {
+                    LiquidGlassSurface(
+                        hazeState = hazeState,
+                        tint = glassTint,
+                        modifier = Modifier.fillMaxWidth().height(52.dp)
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().fillMaxHeight(),
+                            horizontalArrangement = Arrangement.SpaceAround
+                        ) {
+                            items.forEach { item -> NavigatorItem(item, nowLabel, onLabelChange) }
+                        }
                     }
                 }
             }
-            Box(
-                Modifier.size(52.dp)
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.84f), CircleShape)
+            LiquidGlassSurface(
+                hazeState = hazeState,
+                tint = glassTint,
+                shape = CircleShape,
+                modifier = Modifier.size(52.dp)
                     .clickable {
                         Vibrator.click(context)
                         searchExpanded = !searchExpanded
@@ -186,7 +206,12 @@ private fun RowScope.NavigatorItem(
         }
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Box(Modifier.size(indicatorWidth.value, 28.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f), CircleShape))
+            Box(
+                Modifier
+                    .size(indicatorWidth.value, 28.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f))
+            )
             Icon(painterResource(item.iconResId), item.label, tint = color.value, modifier = Modifier.size(23.dp))
         }
         Text(item.label, color = color.value, fontSize = 11.sp, lineHeight = 11.sp, fontWeight = FontWeight.Medium)

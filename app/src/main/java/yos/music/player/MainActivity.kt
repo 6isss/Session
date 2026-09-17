@@ -74,6 +74,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -120,6 +121,8 @@ import yos.music.player.code.utils.player.FadeExo.fadePause
 import yos.music.player.code.utils.player.FadeExo.fadePlay
 import yos.music.player.data.libraries.MusicLibrary
 import yos.music.player.data.libraries.SettingsLibrary
+import yos.music.player.data.libraries.artistsName
+import yos.music.player.data.libraries.defaultArtistsName
 import yos.music.player.data.libraries.defaultTitle
 import yos.music.player.data.models.ImageViewModel
 import yos.music.player.data.models.MainViewModel
@@ -163,6 +166,8 @@ import yos.music.player.ui.widgets.basic.ImageQuality
 import yos.music.player.ui.widgets.basic.NavItem
 import yos.music.player.ui.widgets.basic.ShadowImageWithCache
 import yos.music.player.ui.widgets.basic.YosWrapper
+import yos.music.player.ui.widgets.effects.LiquidGlassHost
+import yos.music.player.ui.widgets.effects.LiquidGlassSurface
 import java.io.File
 import kotlin.math.abs
 
@@ -188,6 +193,7 @@ class MainActivity : BaseActivity() {
         setContent {
             YosMusicTheme {
                 ProvideWindowInsets {
+                    LiquidGlassHost(Modifier.fillMaxSize()) {
                     val context = LocalContext.current
                     val density = LocalDensity.current
 
@@ -673,6 +679,8 @@ class MainActivity : BaseActivity() {
                                                     R.drawable.ic_uitabbar_media
                                                 )
                                             ),
+                                            hazeState = hazeState,
+                                            glassTint = color,
                                             modifier = Modifier
                                                 .onSizeChanged {
                                                     height.intValue = it.height
@@ -935,17 +943,14 @@ class MainActivity : BaseActivity() {
                                                                 this.alpha =
                                                                     yosBottomSheetConfig.menuAlpha
                                                             }
-                                                            .background(color)
                                                     ) {
-                                                        Box(
+                                                        LiquidGlassSurface(
+                                                            hazeState = hazeState,
+                                                                           tint = color,
                                                             modifier = Modifier
                                                                 .fillMaxWidth()
                                                                 .padding(horizontal = 12.dp, vertical = 4.dp)
                                                                 .height(miniPlayerHeight)
-                                                                .background(
-                                                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                                                                    androidx.compose.foundation.shape.RoundedCornerShape(28.dp)
-                                                                )
                                                                 .clickable(
                                                                     interactionSource = remember { MutableInteractionSource() },
                                                                     indication = null,
@@ -1296,6 +1301,7 @@ class MainActivity : BaseActivity() {
                             )
                         }
                     /*}*/
+                    }
                 }
             }
     }
